@@ -24,6 +24,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token", auto_error=False)
 class LocalAuth(BaseAuth):
     JWT_ALGORITHM = "HS256"
 
+    @staticmethod
+    def _compare_secret(left: str, right: str) -> bool:
+        """Constant-time compare that supports non-ASCII credentials."""
+        return secrets.compare_digest(
+            left.encode("utf-8"), right.encode("utf-8")
+        )
+
     def __init__(self) -> None:
         self.username = get_env("FLATNOTES_USERNAME", mandatory=True).lower()
         self.password = get_env("FLATNOTES_PASSWORD", mandatory=True)
@@ -44,7 +51,7 @@ class LocalAuth(BaseAuth):
 
     def login(self, data: Login) -> Token:
         # Check Username
-        username_correct = secrets.compare_digest(
+        username_correct = self._compare_secret(
             self.username.lower(), data.username.lower()
         )
 
@@ -53,7 +60,7 @@ class LocalAuth(BaseAuth):
         if self.is_totp_enabled:
             current_totp = self.totp.now()
             expected_password += current_totp
-        password_correct = secrets.compare_digest(
+        password_correct = self._compare_secret(
             expected_password, data.password
         )
 
