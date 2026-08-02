@@ -1,7 +1,7 @@
 ARG BUILD_DIR=/build
 
-# Build Container (platform is inherited from buildx)
-FROM node:20-alpine AS build
+# Build Container
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 
 ARG BUILD_DIR
 
